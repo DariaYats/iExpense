@@ -15,7 +15,7 @@ struct ExpenseItem: Identifiable, Codable {
 }
 
 struct ContentView: View {
-@State private var expenses = Expenses()
+    @State private var expenses = Expenses()
     @State private var showingAddExpense = false
 
     var body: some View {
@@ -23,15 +23,17 @@ struct ContentView: View {
             List {
                 ForEach(expenses.items) { item in
                     HStack {
-                            VStack(alignment: .leading) {
-                                Text(item.name)
-                                    .font(.headline)
-                                Text(item.type)
-                            }
-
-                            Spacer()
-                            Text(item.amount, format: .currency(code: "USD"))
+                        VStack(alignment: .leading) {
+                            Text(item.name)
+                                .font(.headline)
+                            Text(item.type)
                         }
+
+                        Spacer()
+
+                        Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                            .foregroundColor(color(for: item.amount))
+                    }
                 }
                 .onDelete(perform: removeItems)
             }
@@ -49,6 +51,16 @@ struct ContentView: View {
 
     func removeItems(at offset: IndexSet) {
         expenses.items.remove(atOffsets: offset)
+    }
+
+    func color(for amount: Double) -> Color {
+        if amount < 10 {
+            return .green
+        } else if amount < 100 {
+            return .orange
+        } else {
+            return .red
+        }
     }
 }
 
