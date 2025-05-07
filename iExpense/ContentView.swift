@@ -7,40 +7,50 @@
 
 import SwiftUI
 
+struct ExpenseItem: Identifiable, Codable {
+    var id = UUID()
+    let name: String
+    let type: String
+    let amount: Double
+}
 
 struct ContentView: View {
-    
-    @State private var numbers = [Int]()
-    @State private var currentNumber = 1
-    
-    
-    
+@State private var expenses = Expenses()
+    @State private var showingAddExpense = false
+
     var body: some View {
-        NavigationView {
-            VStack {
-                List {
-                    ForEach( numbers, id: \.self) {
-                        Text("Row \($0)")
-                    }
-                    .onDelete(perform: removeRows)
+        NavigationStack {
+            List {
+                ForEach(expenses.items) { item in
+                    HStack {
+                            VStack(alignment: .leading) {
+                                Text(item.name)
+                                    .font(.headline)
+                                Text(item.type)
+                            }
+
+                            Spacer()
+                            Text(item.amount, format: .currency(code: "USD"))
+                        }
                 }
-                
-                Button("Add number") {
-                    numbers.append(currentNumber)
-                    currentNumber += 1
+                .onDelete(perform: removeItems)
+            }
+            .navigationTitle("iExpense")
+            .toolbar {
+                Button("Add Expanses", systemImage: "plus") {
+                    showingAddExpense = true
                 }
             }
-            .navigationTitle("onDelete()")
-            .toolbar {
-                EditButton()
+            .sheet(isPresented: $showingAddExpense) {
+                AddView(expenses: expenses)
             }
         }
     }
-    func removeRows(at offsets: IndexSet) {
-        numbers.remove(atOffsets: offsets)
+
+    func removeItems(at offset: IndexSet) {
+        expenses.items.remove(atOffsets: offset)
     }
 }
-
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
