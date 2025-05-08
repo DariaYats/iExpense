@@ -5,52 +5,64 @@
 //  Created by Дарья Яцынюк on 03.05.2023.
 //
 
+import SwiftData
 import SwiftUI
 
-struct ExpenseItem: Identifiable, Codable {
-    var id = UUID()
-    let name: String
-    let type: String
-    let amount: Double
-}
-
 struct ContentView: View {
-    @State private var expenses = Expenses()
+    @Query var expenses: [Expenses]
+    @Environment(\.modelContext) var modelContext
+
     @State private var showingAddExpense = false
+    @State private var sortOrder = [
+        SortDescriptor(\Expenses.name),
+        SortDescriptor(\Expenses.amount)
+    ]
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach(expenses.items) { item in
+                ForEach(expenses) { expense in
                     HStack {
                         VStack(alignment: .leading) {
-                            Text(item.name)
+                            Text(expense.name)
                                 .font(.headline)
-                            Text(item.type)
+                            Text(expense.type)
                         }
 
                         Spacer()
 
-                        Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
-                            .foregroundColor(color(for: item.amount))
+                        Text(expense.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                            .foregroundColor(color(for: expense.amount))
                     }
                 }
-                .onDelete(perform: removeItems)
+                .onDelete(perform: deleteItems)
             }
             .navigationTitle("iExpense")
             .toolbar {
                 Button("Add Expanses", systemImage: "plus") {
                     showingAddExpense = true
                 }
+
+                Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                    Picker("Sort", selection: $sortOrder) {
+                        Text("Sort by name")
+                            .tag([
+                                SortDescriptor(\Expenses.name),
+                                SortDescriptor(\Expenses.amount)
+                            ])
+
+                        Text("Sort by amount")
+                            .tag([
+                                SortDescriptor(\Expenses.amount),
+                                SortDescriptor(\Expenses.name)
+                            ])
+                    }
+                }
             }
             .sheet(isPresented: $showingAddExpense) {
-                AddView(expenses: expenses)
+                AddView()
             }
         }
-    }
-
-    func removeItems(at offset: IndexSet) {
-        expenses.items.remove(atOffsets: offset)
     }
 
     func color(for amount: Double) -> Color {
@@ -60,6 +72,13 @@ struct ContentView: View {
             return .orange
         } else {
             return .red
+        }
+    }
+
+    func deleteItems(at offsets: IndexSet) {
+        for index in offsets {
+            let item = expenses[index]
+            modelContext.delete(item)
         }
     }
 }
